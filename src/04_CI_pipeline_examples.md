@@ -4,6 +4,60 @@ In this series of examples, we will explore three different approaches to settin
 
 1. **Basic Linear Pipeline with Multiple Jobs**:
 
+   ```yaml
+   stages:
+     - build
+     - test
+     - deploy
+
+   build_a:
+     stage: build
+     script:
+       - echo "Building component A..."
+
+   build_b:
+     stage: build
+     script:
+       - echo "Building component B..."
+
+   test_a:
+     stage: test
+     script:
+       - echo "Running tests for component A..."
+     needs:
+       - build_a
+
+   test_b:
+     stage: test
+     script:
+       - echo "Running tests for component B..."
+     needs:
+       - build_b
+
+   deploy_a:
+     stage: deploy
+     script:
+       - echo "Deploying component A..."
+     needs:
+       - test_a
+
+   deploy_b:
+     stage: deploy
+     script:
+       - echo "Deploying component B..."
+     needs:
+       - test_b
+   ```
+
+   **Explanation**:
+   
+   In this basic linear pipeline, multiple jobs (`build_a`, `build_b`, `test_a`, `test_b`, `deploy_a`, and `deploy_b`) execute within each stage (`build`, `test`, `deploy`), showcasing parallel execution within each stage and sequential dependencies between stages.
+
+   **Key Benefits**:
+   
+   - Simple and straightforward pipeline structure.
+   - Clear sequential execution of stages.
+   
    ```mermaid
    graph LR;
    subgraph Stage_Build
@@ -22,14 +76,7 @@ In this series of examples, we will explore three different approaches to settin
    Stage_Test --> Stage_Deploy
    ```
 
-   **Explanation**:
-   
-   In this basic linear pipeline, multiple jobs (`build_a`, `build_b`, `test_a`, `test_b`, `deploy_a`, and `deploy_b`) execute within each stage (`build`, `test`, `deploy`), showcasing parallel execution within each stage and sequential dependencies between stages.
-
-   **Key Benefits**:
-   
-   - Simple and straightforward pipeline structure.
-   - Clear sequential execution of stages.
+2. **Directed Acyclic Graph (DAG) Pipeline**:
 
    ```yaml
    stages:
@@ -41,9 +88,49 @@ In this series of examples, we will explore three different approaches to settin
      stage: build
      script:
        - echo "Building component A..."
+
+   build_b:
+     stage: build
+     script:
+       - echo "Building component B..."
+
+   test_a:
+     stage: test
+     script:
+       - echo "Running tests for component A..."
+     needs:
+       - build_a
+
+   test_b:
+     stage: test
+     script:
+       - echo "Running tests for component B..."
+     needs:
+       - build_b
+
+   deploy_a:
+     stage: deploy
+     script:
+       - echo "Deploying component A..."
+     needs:
+       - test_a
+
+   deploy_b:
+     stage: deploy
+     script:
+       - echo "Deploying component B..."
+     needs:
+       - test_b
    ```
 
-2. **Directed Acyclic Graph (DAG) Pipeline**:
+   **Explanation**:
+   
+   In this DAG pipeline, job dependencies within each stage are defined using the `needs` keyword, allowing stages A and B to run independently, showcasing parallel execution.
+
+   **Key Benefits**:
+   
+   - Flexible and efficient parallel execution.
+   - Dependencies can be defined for individual jobs.
 
    ```mermaid
    graph TD;
@@ -63,14 +150,66 @@ In this series of examples, we will explore three different approaches to settin
    A_Track ~~~ B_Track
    ```
 
-   **Explanation**:
-   
-   In this DAG pipeline, job dependencies within each stage are defined using the `needs` keyword, allowing stages A and B to run independently, showcasing parallel execution.
+3. **Enhanced Parent-Child Pipeline with Trigger and DAG Tracks**:
 
-   **Key Benefits**:
-   
-   - Flexible and efficient parallel execution.
-   - Dependencies can be defined for individual jobs.
+   Parent Pipeline (`.gitlab-ci-parent.yml`):
+
+   ```yaml
+   stages:
+     - triggers
+
+   trigger_a:
+     stage: triggers
+     trigger:
+       include: .gitlab-ci-child-a.yml
+     rules:
+       - changes:
+           - a/*
+     script:
+       - echo "Parent pipeline: Triggering Child A when changes are made in 'a/'..."
+
+   trigger_b:
+     stage: triggers
+     trigger:
+       include: .gitlab-ci-child-b.yml
+     rules:
+       - changes:
+           - b/*
+     script:
+       - echo "Parent pipeline: Triggering Child B when changes are made in 'b/'..."
+   ```
+
+   Child Pipeline for Component A (`.gitlab-ci-child-a.yml`):
+
+   ```yaml
+   stages:
+     - build
+     - test
+
+
+     - deploy
+
+   build_a:
+     stage: build
+     script:
+       - echo "Building component A..."
+
+   test_a:
+     stage: test
+     script:
+       - echo "Running tests for component A..."
+     needs:
+       - build_a
+
+   deploy_a:
+     stage: deploy
+     script:
+       - echo "Deploying component A..."
+     needs:
+       - test_a
+   ```
+
+   Child Pipeline for Component B (`.gitlab-ci-child-b.yml`):
 
    ```yaml
    stages:
@@ -78,13 +217,34 @@ In this series of examples, we will explore three different approaches to settin
      - test
      - deploy
 
-   build_a:
+   build_b:
      stage: build
      script:
-       - echo "Building component A..."
+       - echo "Building component B..."
+
+   test_b:
+     stage: test
+     script:
+       - echo "Running tests for component B..."
+     needs:
+       - build_b
+
+   deploy_b:
+     stage: deploy
+     script:
+       - echo "Deploying component B..."
+     needs:
+       - test_b
    ```
 
-3. **Enhanced Parent-Child Pipeline with Trigger and DAG Tracks**:
+   **Explanation**:
+   
+   In this enhanced parent-child pipeline setup, the parent pipeline (`.gitlab-ci-parent.yml`) uses the `include` keyword to include child pipeline configurations (`.gitlab-ci-child-a.yml` and `.gitlab-ci-child-b.yml`). Each child pipeline is triggered when relevant changes occur within the `a/` and `b/` directories, respectively. Each child pipeline can further execute its own DAG-based tasks independently.
+
+   **Key Benefits**:
+   
+   - Modular and scalable pipeline management.
+   - Fine-grained control over triggers and dependencies.
 
    ```mermaid
    graph TD;
@@ -110,29 +270,12 @@ In this series of examples, we will explore three different approaches to settin
    .gitlab-ci-child-b.yml .-> Child_Pipeline_B
    ```
 
-   **Explanation**:
-   
-   In this enhanced parent-child pipeline setup, the parent pipeline (`.gitlab-ci-parent.yml`) uses the `include` keyword to include child pipeline configurations (`.gitlab-ci-child-a.yml` and `.gitlab-ci-child-b.yml`). Each child pipeline is triggered when relevant changes occur within the `a/` and `b/` directories, respectively. Each child pipeline can further execute its own DAG-based tasks independently.
-
-   **Key Benefits**:
-   
-   - Modular and scalable pipeline management.
-   - Fine-grained control over triggers and dependencies.
-
-   ```yaml
-   stages:
-     - build
-     - test
-     - deploy
-
-   build_a:
-     stage: build
-     script:
-       - echo "Building component A..."
-   ```
-
 **Conclusion**:
 
-In this document, we have explored three different approaches to CI/CD pipelines using GitLab's `.gitlab-ci.yml` configuration. Each approach offers its own advantages and is suited for different scenarios. The choice of pipeline approach depends on the specific requirements and complexity of your project. Understanding these concepts can help you design effective CI/CD workflows for your development projects.
+In this document, we have explored three different approaches to CI/CD pipelines using GitLab's `.gitlab-ci.yml` configuration. Each approach offers its own advantages and is suited for different scenarios:
 
-```
+- The basic linear pipeline provides simplicity and clear sequential execution.
+- The DAG pipeline allows for flexible and efficient parallel execution with individual job dependencies.
+- The enhanced parent-child pipeline offers modular and scalable pipeline management with fine-grained control over triggers and dependencies.
+
+The choice of pipeline approach depends on the specific requirements and complexity of your project. Understanding these concepts can help you design effective CI/CD workflows for your development projects.
