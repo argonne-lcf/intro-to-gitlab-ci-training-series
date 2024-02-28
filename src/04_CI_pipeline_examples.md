@@ -159,8 +159,6 @@ In this series of examples, we will explore three different approaches to settin
      rules:
        - changes:
            - a/*
-     script:
-       - echo "Parent pipeline: Triggering Child A when changes are made in 'a/'..."
 
    trigger_b:
      stage: triggers
@@ -169,8 +167,6 @@ In this series of examples, we will explore three different approaches to settin
      rules:
        - changes:
            - b/*
-     script:
-       - echo "Parent pipeline: Triggering Child B when changes are made in 'b/'..."
    ```
 
    Child Pipeline for Component A (`.gitlab-ci-child-a.yml`):
@@ -184,6 +180,7 @@ In this series of examples, we will explore three different approaches to settin
    build_a:
      stage: build
      script:
+       - echo "Parent pipeline: Triggering Child A when changes are made in 'a/'..."
        - echo "Building component A..."
 
    test_a:
@@ -212,6 +209,7 @@ In this series of examples, we will explore three different approaches to settin
    build_b:
      stage: build
      script:
+       - echo "Parent pipeline: Triggering Child B when changes are made in 'b/'..."
        - echo "Building component B..."
 
    test_b:
