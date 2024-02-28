@@ -29,6 +29,7 @@ In this series of examples, we will explore three different approaches to settin
      stage: test
      script:
        - echo "Running tests for component B..."
+       - sleep 10
 
    deploy_a:
      stage: deploy
@@ -97,6 +98,7 @@ In this series of examples, we will explore three different approaches to settin
      stage: test
      script:
        - echo "Running tests for component B..."
+       - sleep 10
      needs:
        - build_b
 
@@ -218,6 +220,7 @@ In this series of examples, we will explore three different approaches to settin
      stage: test
      script:
        - echo "Running tests for component B..."
+       - sleep 10
      needs:
        - build_b
 
