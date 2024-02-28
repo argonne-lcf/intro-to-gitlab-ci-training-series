@@ -179,8 +179,6 @@ In this series of examples, we will explore three different approaches to settin
    stages:
      - build
      - test
-
-
      - deploy
 
    build_a:
