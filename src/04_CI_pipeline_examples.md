@@ -24,29 +24,21 @@ In this series of examples, we will explore three different approaches to settin
      stage: test
      script:
        - echo "Running tests for component A..."
-     needs:
-       - build_a
 
    test_b:
      stage: test
      script:
        - echo "Running tests for component B..."
-     needs:
-       - build_b
 
    deploy_a:
      stage: deploy
      script:
        - echo "Deploying component A..."
-     needs:
-       - test_a
 
    deploy_b:
      stage: deploy
      script:
        - echo "Deploying component B..."
-     needs:
-       - test_b
    ```
 
    **Explanation**:
